@@ -3,6 +3,7 @@ package org.nosqlgeek.demo.jedis;
 
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.exceptions.JedisNoScriptException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -68,7 +69,7 @@ public class CacheLUAScript {
             System.out.println("Executing the cached script ...");
             return new ScriptResponse(jedis.evalsha(sha, keys, args), sha);
 
-        } catch (Exception e) {
+        } catch (JedisNoScriptException e) {
 
             System.out.println("WARN: " + e.toString());
 
@@ -78,7 +79,7 @@ public class CacheLUAScript {
             String newSha = jedis.scriptLoad(script, sampleKey);
             System.out.println("sha = " + newSha);
             System.out.println("exists = " + jedis.scriptExists(newSha, sampleKey));
-            
+
             return new ScriptResponse(jedis.evalsha(newSha, keys, args), newSha);
         }
 
