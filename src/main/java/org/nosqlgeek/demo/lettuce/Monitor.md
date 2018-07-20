@@ -10,7 +10,6 @@ The following command allows you to investigate where your endpoints are:
 /opt/redislabs/bin/rladmin status
 ```
 
-
 ```
 CLUSTER NODES:
 NODE:ID  ROLE    ADDRESS      EXTERNAL_ADDRESS    HOSTNAME       SHARDS  CORES        RAM                AVAILABLE_RAM      VERSION   STATUS 
@@ -35,3 +34,49 @@ db:2         demo            redis:3           node:2         master         819
 
 You can see that node 1 (172.17.0.3) and node 2 (172.17.0.5) are having a proxy running.
 
+The command `redis-cli -h 172.17.0.3 -p 16379 CLUSTER NODES` is confirming it:
+
+```
+1 172.17.0.3:16379 myself,master - 0 0 0 connected 0-8191
+2 172.17.0.5:16379 master - 0 0 0 connected 8192-16383
+```
+
+
+### Connect and monitor
+
+Just use the redis-cli in order to monitor what's happening on the shards behind both endpoints:
+
+```
+redis-cli -h 172.17.0.3 -p 16379 MONITOR >> node1.log &
+redis-cli -h 172.17.0.5 -p 16379 MONITOR >> node2.log &
+```
+
+Here the first lines of 'node1.log':
+
+```
+1532115585.343345 [0 172.17.0.3:53716] "CLIENT" "SETNAME" "lettuce#ClusterTopologyRefresh"
+1532115585.351345 [0 172.17.0.3:53716] "CLUSTER" "NODES"
+1532115585.351345 [0 172.17.0.3:53716] "CLIENT" "LIST"
+1532115585.511339 [0 172.17.0.3:53722] "COMMAND"
+1532115585.539338 [0 172.17.0.3:53724] "SET" "hello:0" "world:0"
+1532115585.543338 [0 172.17.0.3:53724] "SET" "hello:1" "world:1"
+1532115585.563337 [0 172.17.0.3:53724] "SET" "hello:4" "world:4"
+1532115585.567337 [0 172.17.0.3:53724] "SET" "hello:5" "world:5"
+1532115585.571337 [0 172.17.0.3:53724] "SET" "hello:8" "world:8"
+1532115585.571337 [0 172.17.0.3:53724] "SET" "hello:9" "world:9"
+```
+
+And the same for 'node2.log':
+
+```
+1532115585.399343 [0 172.17.0.3:38774] "CLIENT" "SETNAME" "lettuce#ClusterTopologyRefresh"
+1532115585.399343 [0 172.17.0.3:38774] "CLUSTER" "NODES"
+1532115585.399343 [0 172.17.0.3:38774] "CLIENT" "LIST"
+1532115585.559337 [0 172.17.0.3:38792] "SET" "hello:2" "world:2"
+1532115585.563337 [0 172.17.0.3:38792] "SET" "hello:3" "world:3"
+1532115585.567337 [0 172.17.0.3:38792] "SET" "hello:6" "world:6"
+1532115585.567337 [0 172.17.0.3:38792] "SET" "hello:7" "world:7"
+1532115585.575336 [0 172.17.0.3:38792] "SET" "hello:12" "world:12"
+1532115585.579336 [0 172.17.0.3:38792] "SET" "hello:13" "world:13"
+1532115585.591336 [0 172.17.0.3:38792] "SET" "hello:16" "world:16"
+```
