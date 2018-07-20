@@ -2,7 +2,7 @@
 
 ... the commands to the several endpoints
 
-## Know your endpoints
+## Endpoints
 
 The following command allows you to investigate where your endpoints are:
 
@@ -42,7 +42,7 @@ The command `redis-cli -h 172.17.0.3 -p 16379 CLUSTER NODES` is confirming it:
 ```
 
 
-### Connect and monitor
+### Monitor
 
 Just use the redis-cli in order to monitor what's happening on the shards behind both endpoints:
 
