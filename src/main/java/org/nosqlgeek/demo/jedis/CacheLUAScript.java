@@ -1,6 +1,8 @@
 package org.nosqlgeek.demo.jedis;
 
 
+import org.nosqlgeek.demo.Constants;
+import org.nosqlgeek.demo.Test;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.exceptions.JedisNoScriptException;
@@ -25,7 +27,7 @@ public class CacheLUAScript {
 
 
         Set<HostAndPort> nodes = new HashSet<HostAndPort>();
-        nodes.add(new HostAndPort("172.17.0.3", 16379));
+        nodes.add(new HostAndPort(Constants.HOST, Constants.PORT));
 
         JedisCluster jedis = new JedisCluster(nodes);
 
@@ -78,7 +80,12 @@ public class CacheLUAScript {
 
             String newSha = jedis.scriptLoad(script, sampleKey);
             System.out.println("sha = " + newSha);
-            System.out.println("exists = " + jedis.scriptExists(newSha, sampleKey));
+
+
+            //Quick check
+            boolean exists = jedis.scriptExists(newSha, sampleKey);
+            System.out.println("exists = " + exists);
+            Test.assertEquals(true, exists);
 
             return new ScriptResponse(jedis.evalsha(newSha, keys, args), newSha);
         }
