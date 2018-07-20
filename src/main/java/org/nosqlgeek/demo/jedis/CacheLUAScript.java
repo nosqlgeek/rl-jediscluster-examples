@@ -15,11 +15,16 @@ import java.util.Set;
 public class CacheLUAScript {
 
 
+    /**
+     * Entry point
+     *
+     * @param cargs
+     */
     public static void main(String[] cargs) {
 
 
         Set<HostAndPort> nodes = new HashSet<HostAndPort>();
-        nodes.add(new HostAndPort("ubuntu-server", 7000));
+        nodes.add(new HostAndPort("172.17.0.3", 16379));
 
         JedisCluster jedis = new JedisCluster(nodes);
 
@@ -28,37 +33,55 @@ public class CacheLUAScript {
 
 
         List<String> keys  = new ArrayList<String>();
-        keys.add("hello");
         List<String> args = new ArrayList<String>();
-        keys.add("world");
+        keys.add("hello");
+        args.add("world");
 
-        ScriptResponse resp = evalsha(jedis, script, "-1", keys, args);
+        //Execute without any script
+        ScriptResponse resp = evalsha(jedis, script, "i-am-not-there-yet", keys, args);
+        System.out.println(resp.getResponse().toString());
+
         ScriptResponse resp2 = evalsha(jedis, script, resp.getSha(), keys, args);
+        System.out.println(resp2.getResponse().toString());
 
 
     }
 
+    /**
+     * Helper method for caching a script on-demand
+     *
+     * @param jedis
+     * @param script
+     * @param sha
+     * @param keys
+     * @param args
+     * @return
+     */
     private static ScriptResponse evalsha(JedisCluster jedis, String script, String sha, List<String> keys, List<String> args) {
 
         //Let's assume that at least one key was passed
         String sampleKey = keys.get(0);
 
-        if (jedis.scriptExists(sha, sampleKey)) {
 
-            //Execute the cached script
+        try {
+
             System.out.println("Executing the cached script ...");
             return new ScriptResponse(jedis.evalsha(sha, keys, args), sha);
 
+        } catch (Exception e) {
 
-        } else {
-
-            System.out.println("Loading the script before executing ...");
+            System.out.println("WARN: " + e.toString());
 
             //Load the script to the shard and execute it
-            String newSha = jedis.scriptLoad(script, sampleKey);
+            System.out.println("Loading script ...");
 
-            return new ScriptResponse(jedis.evalsha(sha, keys, args), newSha);
+            String newSha = jedis.scriptLoad(script, sampleKey);
+            System.out.println("sha = " + newSha);
+            System.out.println("exists = " + jedis.scriptExists(newSha, sampleKey));
+            
+            return new ScriptResponse(jedis.evalsha(newSha, keys, args), newSha);
         }
+
 
     }
 
